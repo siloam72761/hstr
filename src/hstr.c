@@ -1706,7 +1706,7 @@ int openDelCm()
 	FILE *pFile;
 	char buffer[256], *pStr;
  
-  pFile = fopen("/deleted_cmd.txt", "r");
+  pFile = fopen("./deleted_cmd.txt", "r");
   
   if(pFile == NULL ){
 	printf("file open error\n");
