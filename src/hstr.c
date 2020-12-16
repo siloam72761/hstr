@@ -263,6 +263,7 @@ static const char* HELP_STRING=
         "\n  --show-configuration     -s ... show configuration to be added to ~/.bashrc"
         "\n  --show-zsh-configuration -z ... show zsh configuration to be added to ~/.zshrc"
         "\n  --show-blacklist         -b ... show commands to skip on history indexation"
+        "\n  --show-deleted           -q ... show commands that are deleted"
         "\n  --version                -V ... show version details"
         "\n  --help                   -h ... help"
         "\n"
@@ -287,6 +288,7 @@ static const struct option long_options[] = {
         {"show-configuration",     GETOPT_NO_ARGUMENT, NULL, 's'},
         {"show-zsh-configuration", GETOPT_NO_ARGUMENT, NULL, 'z'},
         {"show-blacklist",         GETOPT_NO_ARGUMENT, NULL, 'b'},
+        {"show-delCm",             GETOPT_NO_ARGUMENT, NULL, 'q'}, // added
         {0,                        0,                  NULL,  0 }
 };
 
@@ -693,13 +695,17 @@ void print_confirm_delete(const char* cmd)
     refresh();
 }
 
+int get_Deleted_Cm(const char * cmd);
+
 void print_cmd_deleted_label(const char* cmd, int occurences)
 {
     char screenLine[CMDLINE_LNG];
     if(hstr->view==HSTR_VIEW_FAVORITES) {
         snprintf(screenLine, getmaxx(stdscr), "Favorites item '%s' deleted", cmd);
+        get_Deleted_Cm(cmd);
     } else {
         snprintf(screenLine, getmaxx(stdscr), "History item '%s' deleted (%d occurrence%s)", cmd, occurences, (occurences==1?"":"s"));
+       get_Deleted_Cm(cmd);
     }
     // TODO make this function
     if(hstr->theme & HSTR_THEME_COLOR) {
@@ -1665,10 +1671,63 @@ void hstr_interactive(void)
     hstr_exit(EXIT_SUCCESS);
 }
 
+//Added
+
+int get_Deleted_Cm(const char * cmd)
+{
+    int fd1, n;
+    
+   //fd1=open("./deleted_cmd.txt", O_CREAT| O_WRONLY | O_APPEND | O_TRUNC, 0644);
+   fd1=open("./deleted_cmd.txt", O_CREAT| O_WRONLY | O_APPEND , 0644);
+
+  if(fd1 < 0){
+  	printf("Failed to open a file\n");
+  	exit(1);
+  }
+ 
+  n = write(fd1, cmd, strlen(cmd));
+  n = write(fd1, "\n", strlen("\n"));
+  if(n<0){
+	printf("file write error\n");
+              exit(1);
+  }  
+  close(fd1);
+
+  printf("Succesfully written.\n");
+
+  return 0;
+
+}
+
+// This function is added to show delted_cmd.txt file
+
+int openDelCm()
+{
+	FILE *pFile;
+	char buffer[256], *pStr;
+ 
+  pFile = fopen("/home/ec2-user/project/hstr/src/deleted_cmd.txt", "r");
+  
+  if(pFile == NULL ){
+	printf("file open error\n");
+	exit(1);
+  }
+
+  while ( !feof( pFile ) ) {
+	  pStr = fgets(buffer, sizeof(buffer), pFile);
+	  printf("%s", pStr);
+	}
+
+ 	fclose(pFile); 
+
+	return 0;
+ 
+} 
+
 void hstr_getopt(int argc, char **argv)
 {
     int option_index = 0;
-    int option = getopt_long(argc, argv, "fkVhnszb", long_options, &option_index);
+    int option = getopt_long(argc, argv, "fkVhnsqzb", long_options, &option_index);
     if(option != -1) {
         switch(option) {
         case 'f':
@@ -1711,6 +1770,12 @@ void hstr_getopt(int argc, char **argv)
             }
             hstr_exit(EXIT_SUCCESS);
             break;
+        case 'q':
+             openDelCm(); //This is added to show deleted command
+             hstr_exit(EXIT_SUCCESS);
+             break;
+
+              
         case '?':
         default:
             printf("%s", HELP_STRING);
@@ -1739,3 +1804,4 @@ int hstr_main(int argc, char* argv[])
 
     return EXIT_SUCCESS;
 }
+

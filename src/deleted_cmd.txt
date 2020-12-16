@@ -1,0 +1,4 @@
+vi hstr.c
+sudo rm /usr/local/bin/hh
+cd ./build/tarball && ./tarball-automake.sh && cd ../..
+vi shfile.c
